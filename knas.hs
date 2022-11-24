@@ -7,15 +7,26 @@ data Variable a = Var a a
 semicol :: Parser Char
 semicol = char ';'
 
+-- "var a=23;"
 variable :: Parser (Variable String)
 variable = do
   string "var"
   space
   name <- many1 alphaNum
   char '='
-  val <- alphaNum
+  val <- many1 alphaNum
   semicol
-  return $ Var name [val]
+  return $ Var name val
+
+-- "var a=23;"
+varapp :: Parser (Variable String)
+varapp = Var <$>
+         (string "var" *>
+          space *>
+          many1 alphaNum)
+         <* char '='
+         <*> many1 alphaNum
+         <* semicol
 
 parseKnas :: String -> Either ParseError (Variable String)
-parseKnas input = parse variable "(unknown)" input
+parseKnas input = parse varapp "(unknown)" input
