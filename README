@@ -1,0 +1,8 @@
+# setup
+
+cabal install parsec
+cabal v1-update
+
+# start
+
+make start
