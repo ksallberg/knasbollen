@@ -1,0 +1,6 @@
+{
+  varde apa=2;
+  utifallAtt(x==23) {
+    varde bepa=4;
+  }
+}
