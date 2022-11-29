@@ -25,51 +25,53 @@ semicol = char ';'
 
 -- "varde a=23;"
 variable :: Parser Stmt
-variable =
-  Var <$>
-  (spaces *> string "varde" *> spaces *> many1 alphaNum <* spaces)
-  <* char '='
-  <* spaces
+variable = Var <$>
+  (spaces *>
+   string "varde" *>
+   spaces *>
+   many1 alphaNum
+   <* spaces
+   <* char '='
+   <* spaces)
   <*> many1 alphaNum
   <* spaces
   <* semicol
   <* spaces
 
 selectCond :: String -> String -> String -> Condition String
-selectCond "==" a b = Eq a b
-selectCond "<" a b = Lt a b
-selectCond ">" a b = Gt a b
+selectCond a "==" b = Eq a b
+selectCond a "<" b = Lt a b
+selectCond a ">" b = Gt a b
 
 -- "utifallAtt(x==23)"
 condition :: Parser (Condition String)
-condition = do
-  string "utifallAtt"
-  spaces
-  char '('
-  spaces
-  var <- many1 alphaNum
-  spaces
-  comp <- choice [string "==", string "<", string ">"]
-  spaces
-  val <- many1 alphaNum
-  spaces
-  char ')'
-  return (selectCond comp var val)
+condition = selectCond <$>
+            (string "utifallAtt" *>
+             spaces *>
+             char '(' *>
+             spaces *>
+             (many1 alphaNum))
+            <* spaces
+            <*> (choice [string "==", string "<", string ">"])
+            <* spaces
+            <*> many1 alphaNum
+            <* spaces
+            <* char ')'
 
 conditional :: Parser Stmt
 conditional = If <$>
-              (spaces *> condition <* spaces)
+              (spaces *>
+               condition
+               <* spaces)
               <*> block
               <* spaces
 
 block :: Parser Stmt
-block = do
-  char '{'
-  spaces
-  x <- many (variable <|> conditional)
-  spaces
-  char '}'
-  return $ Block x
+block = Block <$>
+        (char '{' *> spaces *>)
+        (many $ variable <|> conditional)
+        <* spaces
+        <* char '}'
 
 program :: Parser Prog
 program = Program <$>
