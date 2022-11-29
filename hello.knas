@@ -3,3 +3,13 @@ varde apa=2;
 utifallAtt(x==23) {
   varde bepa=4;
 }
+
+utifallAtt(y==34) {
+  apa = 1;
+} annarsDårå {
+  apa = 3;
+}
+
+springOmkring(varde bepa=3; bepa<4; bepa ++) {
+  skrik("HEJ HEJ");
+}
