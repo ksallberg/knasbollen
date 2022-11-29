@@ -5,9 +5,9 @@ utifallAtt(x==23) {
 }
 
 utifallAtt(y==34) {
-  apa = 1;
+  varde apa = 1;
 } annarsDårå {
-  apa = 3;
+  varde apa = 3;
 }
 
 springOmkring(varde bepa=3; bepa<4; bepa ++) {

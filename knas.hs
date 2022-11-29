@@ -58,6 +58,7 @@ condition = selectCond <$>
             <* spaces
             <* char ')'
 
+-- "utifallAtt(x==23) { ... }"
 conditional :: Parser Stmt
 conditional = If <$>
               (spaces *>
@@ -66,20 +67,25 @@ conditional = If <$>
               <*> block
               <* spaces
 
+-- "utifallAtt(x==23) { ... } annarsDårå { ... }"
+conditionalElse :: Parser Stmt
+conditionalElse = IfThenElse <$>
+  (spaces *> condition <* spaces)
+  <*>
+  block
+  <*>
+  (spaces *> string "annarsDårå" *> spaces *> block <* spaces)
+
+substmts :: Parser [Stmt]
+substmts = (many $ variable <|>
+                   try conditionalElse <|>
+                   conditional)
+
 block :: Parser Stmt
-block = Block <$>
-        (char '{' *> spaces *>)
-        (many $ variable <|> conditional)
-        <* spaces
-        <* char '}'
+block = Block <$> (char '{' *> spaces *>) substmts <* spaces <* char '}'
 
 program :: Parser Prog
-program = Program <$>
-          (spaces *>
-           many (block <|>
-                 conditional <|>
-                 variable))
-          <* spaces
+program = Program <$> (spaces *> substmts) <* spaces
 
 main :: IO ()
 main = do
