@@ -17,22 +17,23 @@ data Stmt = Block [Stmt] |
             Var String String
   deriving (Show)
 
+data Prog = Program [Stmt]
+  deriving (Show)
+
 semicol :: Parser Char
 semicol = char ';'
 
 -- "varde a=23;"
 variable :: Parser Stmt
-variable = Var <$>
-           (spaces *>
-            string "varde" *>
-            spaces *>
-            many1 alphaNum <* spaces)
-           <* char '='
-           <* spaces
-           <*> many1 alphaNum
-           <* spaces
-           <* semicol
-           <* spaces
+variable =
+  Var <$>
+  (spaces *> string "varde" *> spaces *> many1 alphaNum <* spaces)
+  <* char '='
+  <* spaces
+  <*> many1 alphaNum
+  <* spaces
+  <* semicol
+  <* spaces
 
 selectCond :: String -> String -> String -> Condition String
 selectCond "==" a b = Eq a b
@@ -56,13 +57,10 @@ condition = do
   return (selectCond comp var val)
 
 conditional :: Parser Stmt
-conditional = do
-  spaces
-  cond <- condition
-  spaces
-  next <- block
-  spaces
-  return $ If cond next
+conditional = If <$>
+              (spaces *> condition <* spaces)
+              <*> block
+              <* spaces
 
 block :: Parser Stmt
 block = do
@@ -73,23 +71,28 @@ block = do
   char '}'
   return $ Block x
 
-parseKnas :: String -> Either ParseError Stmt
-parseKnas input = parse conditional "(unknown)" input
+program :: Parser Prog
+program = Program <$>
+          (spaces *>
+           many (block <|>
+                 conditional <|>
+                 variable))
+          <* spaces
 
 main :: IO ()
 main = do
-  -- args <- getArgs
-  contents <- readFile "hello.knas" --(head args)
-  let x = parse block "unknown" contents
+  args <- getArgs
+  case args of
+    [] ->
+      putStrLn "Fel! Du måste ge en knasig fil"
+    (file : _) -> do
+      contents <- readFile file
+      let x = parse program "unknown" contents
+      putStrLn (show x)
+
+test :: IO ()
+test = do
+  contents <- readFile "hello.knas"
+  let x = parse program "unknown" contents
   putStrLn (show x)
   return ()
-
-testProgInput :: String
-testProgInput = unlines
-  ["{",
-   "  varde apa=2;",
-   "varde bepa=3; ",
-   "}"]
-
-testProg :: Either ParseError Stmt
-testProg = parse block "(unknown)" testProgInput
