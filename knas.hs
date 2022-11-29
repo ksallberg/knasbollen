@@ -4,20 +4,23 @@ import System.IO
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Char
 
-data Condition a = Gt a a |
-                   Lt a a |
-                   Gte a a |
-                   Lte a a |
-                   Eq a a
+data Prog = Program [Stmt]
   deriving (Show)
 
 data Stmt = Block [Stmt] |
             If (Condition String) Stmt |
             IfThenElse (Condition String) Stmt Stmt |
-            Var String String
+            Var String String |
+            Assign String String |
+            Loop (Condition String) Stmt |
+            Print String
   deriving (Show)
 
-data Prog = Program [Stmt]
+data Condition a = Gt a a |
+                   Lt a a |
+                   Gte a a |
+                   Lte a a |
+                   Eq a a
   deriving (Show)
 
 semicol :: Parser Char
@@ -44,25 +47,26 @@ selectCond a "<" b = Lt a b
 selectCond a ">" b = Gt a b
 
 -- "utifallAtt(x==23)"
-condition :: Parser (Condition String)
-condition = selectCond <$>
-            (string "utifallAtt" *>
-             spaces *>
-             char '(' *>
-             spaces *>
-             (many1 alphaNum))
-            <* spaces
-            <*> (choice [string "==", string "<", string ">"])
-            <* spaces
-            <*> many1 alphaNum
-            <* spaces
-            <* char ')'
+condition :: String -> Parser (Condition String)
+condition word =
+  selectCond <$>
+  (string word *>
+    spaces *>
+    char '(' *>
+    spaces *>
+    (many1 alphaNum))
+  <* spaces
+  <*> (choice [string "==", string "<", string ">"])
+  <* spaces
+  <*> many1 alphaNum
+  <* spaces
+  <* char ')'
 
 -- "utifallAtt(x==23) { ... }"
 conditional :: Parser Stmt
 conditional = If <$>
               (spaces *>
-               condition
+               (condition "utifallAtt")
                <* spaces)
               <*> block
               <* spaces
@@ -70,16 +74,46 @@ conditional = If <$>
 -- "utifallAtt(x==23) { ... } annarsDårå { ... }"
 conditionalElse :: Parser Stmt
 conditionalElse = IfThenElse <$>
-  (spaces *> condition <* spaces)
+  (spaces *> (condition "utifallAtt") <* spaces)
   <*>
   block
   <*>
   (spaces *> string "annarsDårå" *> spaces *> block <* spaces)
 
+loop :: Parser Stmt
+loop = Loop <$>
+  (spaces *> (condition "springOmkringTills") <* spaces)
+  <*> block
+
+pprint :: Parser Stmt
+pprint = Print <$>
+         (spaces *>
+          string "skrik" *>
+          char '(' *>
+          char '"' *>
+          many1 (choice [alphaNum, space]))
+         <* char '"'
+         <* char ')'
+         <* char ';'
+
+assign :: Parser Stmt
+assign = Assign <$>
+         (spaces *>
+          many1 alphaNum
+          <* spaces
+          <* char '='
+          <* spaces)
+         <*>
+         (many1 alphaNum)
+         <* char ';'
+
 substmts :: Parser [Stmt]
-substmts = (many $ variable <|>
-                   try conditionalElse <|>
-                   conditional)
+substmts = many $ try variable <|>
+                  try conditionalElse <|>
+                  try conditional <|>
+                  try loop <|>
+                  try pprint <|>
+                  try assign
 
 block :: Parser Stmt
 block = Block <$> (char '{' *> spaces *>) substmts <* spaces <* char '}'

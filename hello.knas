@@ -5,11 +5,11 @@ utifallAtt(x==23) {
 }
 
 utifallAtt(y==34) {
-  varde apa = 1;
+  apa = 1;
 } annarsDårå {
-  varde apa = 3;
+  apa = 3;
 }
 
-springOmkring(varde bepa=3; bepa<4; bepa ++) {
+springOmkringTills(bepa<5) {
   skrik("HEJ HEJ");
 }
